@@ -5,6 +5,7 @@ import LandingPage from "./Components/LandingPage";
 import StudentDashboard from "./Components/StudentDashboard";
 import Login from './Components/Login';
 import StudentPage from './Components/StudentPage';
+import Form from './Components/Form';
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/admin-login" element={<Login />} />
           <Route path="/student-login" element={<Login />} />
           <Route path="/student-page" element={<StudentPage />} />
+          <Route path="/form" element={<Form/>}/>
         </Routes>
       </div>
     </Router>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import { useFormStore } from "../../../GlobalStore/FormStore";
 
 interface AddressFormData {
   country: string;
@@ -14,6 +15,7 @@ interface AddressFormData {
 type AddressErrors = Partial<Record<keyof AddressFormData, string>>;
 
 const AddressDetails: React.FC = () => {
+  const {ActiveFormStep,setActiveFormStep} = useFormStore();
   const [formData, setFormData] = useState<AddressFormData>({
     country: "INDIA",
     state: "",
@@ -81,10 +83,13 @@ const AddressDetails: React.FC = () => {
       alert("Form submitted successfully!");
     }
   };
-
+  const MovetoNextStep = () =>{
+    alert("Moved");
+    setActiveFormStep(ActiveFormStep+1);
+  }
   return (
     <div className="mx-auto p-6 ">
-      <h2 className="text-2xl font-semibold mb-6">Address Details</h2>
+      <h2 className="text-[5vw] font-[Kajiro] mb-6">Address Details</h2>
       <form onSubmit={handleSubmit}>
         {/* Permanent Address */}
         <div className="mb-8 ">
@@ -189,6 +194,7 @@ const AddressDetails: React.FC = () => {
           <button
             type="submit"
             className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+            onClick={MovetoNextStep}
           >
             Save & Next
           </button>

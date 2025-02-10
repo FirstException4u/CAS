@@ -5,6 +5,7 @@ import EducationDetails from "./subcomponents/MultiStepForm/EducationDetails";
 import { PhotoSignatureForm } from "./subcomponents/MultiStepForm/PhotoSignature";
 import CourseSelection from "./subcomponents/MultiStepForm/CourseSelection";
 import { DocumentUploadForm } from "./subcomponents/MultiStepForm/DocumentUpload";
+import { useFormStore } from "../GlobalStore/FormStore";
 
 const Form: React.FC = () => {
     const steps = ["Personal", "Address", "Education", "Photo & Sign", "Course", "Documents"];
@@ -16,32 +17,7 @@ const Form: React.FC = () => {
         <CourseSelection />,
         <DocumentUploadForm />,
     ];
-
-    const [currentStep, setCurrentStep] = useState(() => {
-        const storedStep = localStorage.getItem("currentStep");
-        return storedStep !== null ? parseInt(storedStep, 10) : 0;
-    });
-
-    
-    useEffect(() => {
-      
-            localStorage.setItem("currentStep", "0");
-        
-    }, []);
-
-    
-    useEffect(() => {
-        const updateCurrentStep = () => {
-            const storedStep = localStorage.getItem("currentStep");
-            setCurrentStep(parseInt(storedStep || "0", 10));
-        };
-        window.addEventListener("storage", updateCurrentStep);
-        const interval = setInterval(updateCurrentStep, 500);
-        return () => {
-            window.removeEventListener("storage", updateCurrentStep);
-            clearInterval(interval);
-        };
-    }, []);
+    const {ActiveFormStep} = useFormStore();
 
     return (
         <div className="min-h-screen w-full p-5">
@@ -57,7 +33,7 @@ const Form: React.FC = () => {
                     ))}
                 </div>
                 <div className="w-full min-h-[70vh] bg-white rounded-3xl mt-4">
-                    {stepscomponents[4]}
+                    {stepscomponents[ActiveFormStep]}
                 </div>
             </div>
         </div>
