@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useFormStore } from '../../../GlobalStore/FormStore';
 
 export const PhotoSignatureForm = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [formError, setFormError] = useState<string>("");
+  const { ActiveFormStep, setActiveFormStep } = useFormStore();
 
   const handleFileChange = (
     setter: React.Dispatch<React.SetStateAction<File | null>>,
@@ -13,13 +16,37 @@ export const PhotoSignatureForm = () => {
       setter(file);
     }
   };
-  const HandleClick=()=>{
-    const currentStepString = localStorage.getItem("currentStep");
-    const currentStep = currentStepString ? parseInt(currentStepString, 10) : 0;
-    localStorage.setItem("currentStep", (currentStep + 1).toString());
-  }
+
+  const handleSaveNext = () => {
+    if (!photoFile && !signatureFile) {
+      setFormError("Please upload a valid Student and Signature Photo (Max size 500 KB).");
+      return
+    }
+    if (!photoFile) {
+      setFormError("Please upload a valid Student Photo (Max size 500 KB).");
+      return;
+    } else if (photoFile.size > 500 * 1024) {
+      setFormError("Student Photo exceeds the maximum allowed size of 500 KB.");
+      return;
+    }
+
+
+    if (!signatureFile) {
+      setFormError("Please upload a valid Student Signature (Max size 300 KB).");
+      return;
+    } else if (signatureFile.size > 300 * 1024) {
+      setFormError("Student Signature exceeds the maximum allowed size of 300 KB.");
+      return;
+    }
+
+
+    setFormError("");
+    setActiveFormStep(ActiveFormStep + 1);
+
+  };
+
   return (
-    <div className="container h-[70vh]  mx-auto p-8 rounded-lg shadow-md">
+    <div className="container h-[70vh] mx-auto p-8 rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-6 text-gray-700">
         Photo and Signature Details
       </h2>
@@ -77,9 +104,7 @@ export const PhotoSignatureForm = () => {
                 Format: JPG, PNG (Max size 300 KB)
               </p>
               {signatureFile && (
-                <p className="mt-2 text-sm text-gray-600">
-                  {signatureFile.name}
-                </p>
+                <p className="mt-2 text-sm text-gray-600">{signatureFile.name}</p>
               )}
             </div>
           </div>
@@ -89,11 +114,14 @@ export const PhotoSignatureForm = () => {
         <div className="pt-6">
           <button
             type="button"
-            onClick={HandleClick}
+            onClick={handleSaveNext}
             className="w-full md:w-auto px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
           >
             Save & Next
           </button>
+          {formError && (
+            <p className="mt-2 text-sm text-red-600">{formError}</p>
+          )}
         </div>
       </div>
     </div>

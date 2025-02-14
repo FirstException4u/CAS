@@ -1,19 +1,16 @@
 import React, { useState } from "react";
+import { useFormStore } from "../../../GlobalStore/FormStore";
 
 export default function CourseSelection(): JSX.Element {
   const [selectedCourse, setSelectedCourse] = useState<string>("FYBSCT");
-
+  const {ActiveFormStep,setActiveFormStep} = useFormStore();
   const handleCourseChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
     setSelectedCourse(event.target.value);
   };
-
-  const handleSave = (): void => {
-    localStorage.setItem("selectedCourse", selectedCourse);
-    const currentStepString = localStorage.getItem("currentStep");
-    const currentStep = currentStepString ? parseInt(currentStepString, 10) : 0;
-    localStorage.setItem("currentStep", (currentStep + 1).toString());
-    alert("Course saved successfully!");
+  const handleNext = () => {
+    setActiveFormStep(ActiveFormStep+1);
   };
+
 
   return (
     <div className="flex items-center justify-center min-h-[70vh]">
@@ -32,16 +29,16 @@ export default function CourseSelection(): JSX.Element {
               onChange={handleCourseChange} 
               className="bg-gray-100 px-3 py-2 rounded font-mono text-gray-900 w-full"
             >
-              <option value="FYBSCT">FYBSCT</option>
-              <option value="SYBSCT">SYBSCT</option>
-              <option value="TYBSCT">TYBSCT</option>
-              <option value="MSC">MSC</option>
+              <option value="FYBSCIT">FYBSCIT</option>
+              <option value="SYBSCIT">SYBSCIT</option>
+              <option value="TYBSCIT">TYBSCIT</option>
+        
             </select>
           </div>
 
           <div className="border-t border-gray-200 pt-6">
             <button 
-              onClick={handleSave} 
+              onClick={handleNext} 
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
             >
               Save & Next

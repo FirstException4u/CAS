@@ -1,204 +1,158 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useFormStore } from "../../../GlobalStore/FormStore";
+import { AddressDetailsInterfaces } from "../../../Interfaces/AddressDetailsInterfaces";
+import { AddressDetailsValidation } from "../../../ValidationSchema/AddressDetailsValidation";
+import { useAddressDetailsStore } from "../../../GlobalStore/AddressDetailsStore";
 
-interface AddressFormData {
-  country: string;
-  state: string;
-  district: string;
-  city: string;
-  isSameAsPermanent: boolean;
-  localState: string;
-  localDistrict: string;
-  localCity: string;
+interface FieldProps {
+  register: ReturnType<typeof useForm>["register"];
+  errors: any;
 }
 
-type AddressErrors = Partial<Record<keyof AddressFormData, string>>;
+interface CorrespondenceFieldProps extends FieldProps {
+  isSameAsPermanent: boolean;
+  defaultChecked: boolean;
+}
+
+interface NavigationProps {
+  onPrev: () => void;
+}
+
+const PermanentAddressSection: React.FC<FieldProps> = ({ register, errors }) => (
+  <div className="mb-8">
+    <div className="grid grid-cols-1 gap-4">
+      <div>
+        <label className="font-medium">Permanent Address *</label>
+        <input
+          type="text"
+          {...register("Permanentaddress")}
+          className="w-full border p-2 rounded"
+        />
+        {errors.Permanentaddress && (
+          <p className="text-red-500 text-sm">
+            {errors.Permanentaddress?.message?.toString()}
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+const CorrespondenceAddressSection: React.FC<CorrespondenceFieldProps> = ({
+  register,
+  errors,
+  isSameAsPermanent,
+  defaultChecked,
+}) => (
+  <div className="mb-8">
+    <label className="flex items-center">
+      <input
+        type="checkbox"
+        {...register("isSameAsPermanent", {
+          setValueAs: (value) => !!value,
+        })}
+        defaultChecked={defaultChecked}
+        className="mr-2"
+      />
+      Same as Permanent Address
+    </label>
+    <div className="grid grid-cols-1 gap-4 mt-4">
+      <div>
+        <label className="font-medium">
+          Correspondence Address {isSameAsPermanent ? "" : "*"}
+        </label>
+        <input
+          type="text"
+          {...register("Correspondenceaddress")}
+          className="w-full border p-2 rounded"
+          disabled={isSameAsPermanent}
+        />
+        {errors.Correspondenceaddress && (
+          <p className="text-red-500 text-sm">
+            {errors.Correspondenceaddress?.message?.toString()}
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+const NavigationButtons: React.FC<NavigationProps> = ({ onPrev }) => (
+  <div className="flex justify-between">
+    <button
+      type="submit"
+      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+    >
+      Save & Next
+    </button>
+    <button
+      type="button"
+      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+      onClick={onPrev}
+    >
+      Prev
+    </button>
+  </div>
+);
 
 const AddressDetails: React.FC = () => {
-  const {ActiveFormStep,setActiveFormStep} = useFormStore();
-  const [formData, setFormData] = useState<AddressFormData>({
-    country: "INDIA",
-    state: "",
-    district: "",
-    city: "",
-    isSameAsPermanent: false,
-    localState: "",
-    localDistrict: "",
-    localCity: "",
+  const { ActiveFormStep, setActiveFormStep } = useFormStore();
+  const { Data, setData } = useAddressDetailsStore();
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(AddressDetailsValidation) as any,
+    defaultValues: {
+      Permanentaddress: Data.permanentAddress,
+      isSameAsPermanent: Data.isSameAsPermanent,
+      Correspondenceaddress: Data.correspondenceAddress,
+    },
   });
 
-  const [errors, setErrors] = useState<AddressErrors>({});
+  const isSameAsPermanent = watch("isSameAsPermanent");
+  const permanentAddress = watch("Permanentaddress");
 
   useEffect(() => {
-    const savedData = localStorage.getItem("addressDetails");
-    if (savedData) {
-      setFormData(JSON.parse(savedData));
+    if (isSameAsPermanent) {
+      setValue("Correspondenceaddress", permanentAddress);
     }
-  }, []);
+  }, [isSameAsPermanent, permanentAddress, setValue]);
 
-  useEffect(() => {
-    localStorage.setItem("addressDetails", JSON.stringify(formData));
-  }, [formData]);
+  const onSubmit = (formValues: any) => {
+    const updatedData: AddressDetailsInterfaces = {
+      permanentAddress: formValues.Permanentaddress,
+      correspondenceAddress: formValues.Correspondenceaddress,
+      isSameAsPermanent: formValues.isSameAsPermanent,
+    };
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    const fieldName = name as keyof AddressFormData;
-    if (type === "checkbox") {
-      setFormData((prev) => ({
-        ...prev,
-        isSameAsPermanent: checked,
-        localState: checked ? prev.state : "",
-        localDistrict: checked ? prev.district : "",
-        localCity: checked ? prev.city : "",
-      }));
-    } else {
-      setFormData({ ...formData, [fieldName]: value });
-    }
-
-    if (errors[fieldName]) {
-      setErrors((prev) => ({ ...prev, [fieldName]: "" }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    let newErrors: AddressErrors = {};
-    if (!formData.state) newErrors.state = "State is required";
-    if (!formData.district) newErrors.district = "District is required";
-    if (!formData.city) newErrors.city = "City is required";
-    if (!formData.isSameAsPermanent) {
-      if (!formData.localState) newErrors.localState = "State is required";
-      if (!formData.localDistrict) newErrors.localDistrict = "District is required";
-      if (!formData.localCity) newErrors.localCity = "City is required";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (validateForm()) {
-      const currentStepString = localStorage.getItem("currentStep");
-      const currentStep = currentStepString ? parseInt(currentStepString, 10) : 0;
-      localStorage.setItem("currentStep", (currentStep + 1).toString());
-      alert("Form submitted successfully!");
-    }
-  };
-  const MovetoNextStep = () =>{
+    setData(updatedData);
     alert("Moved");
-    setActiveFormStep(ActiveFormStep+1);
-  }
+    setActiveFormStep(ActiveFormStep + 1);
+  };
+
+  const MovetoPrevStep = () => {
+    setActiveFormStep(ActiveFormStep - 1);
+  };
+
   return (
-    <div className="mx-auto p-6 ">
-      <h2 className="text-[5vw] font-[Kajiro] mb-6">Address Details</h2>
-      <form onSubmit={handleSubmit}>
-        {/* Permanent Address */}
-        <div className="mb-8 ">
-          <h3 className="font-semibold mb-4">Residence / Permanent Address</h3>
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <label className="font-medium">Country *</label>
-              <input type="text" value="INDIA" disabled className="w-full border p-2 rounded" />
-            </div>
-            <div>
-              <label className="font-medium">State *</label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-              />
-              {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
-            </div>
-            <div>
-              <label className="font-medium">District *</label>
-              <input
-                type="text"
-                name="district"
-                value={formData.district}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-              />
-              {errors.district && <p className="text-red-500 text-sm">{errors.district}</p>}
-            </div>
-            <div>
-              <label className="font-medium">City *</label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-              />
-              {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
-            </div>
-          </div>
-        </div>
-        {/* Correspondence Address */}
-        <div className="mb-8 ">
-          <h3 className="font-semibold mb-4">Correspondence/Local Address</h3>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="isSameAsPermanent"
-              checked={formData.isSameAsPermanent}
-              onChange={handleChange}
-              className="mr-2"
-            />
-            Same as Permanent Address
-          </label>
-          <div className="grid grid-cols-4 gap-4 mt-4">
-            <div>
-              <label className="font-medium">Country *</label>
-              <input type="text" value="INDIA" disabled className="w-full border p-2 rounded" />
-            </div>
-            <div>
-              <label className="font-medium">State *</label>
-              <input
-                type="text"
-                name="localState"
-                value={formData.localState}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-                disabled={formData.isSameAsPermanent}
-              />
-              {errors.localState && <p className="text-red-500 text-sm">{errors.localState}</p>}
-            </div>
-            <div>
-              <label className="font-medium">District *</label>
-              <input
-                type="text"
-                name="localDistrict"
-                value={formData.localDistrict}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-                disabled={formData.isSameAsPermanent}
-              />
-              {errors.localDistrict && <p className="text-red-500 text-sm">{errors.localDistrict}</p>}
-            </div>
-            <div>
-              <label className="font-medium">City *</label>
-              <input
-                type="text"
-                name="localCity"
-                value={formData.localCity}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-                disabled={formData.isSameAsPermanent}
-              />
-              {errors.localCity && <p className="text-red-500 text-sm">{errors.localCity}</p>}
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
-            onClick={MovetoNextStep}
-          >
-            Save & Next
-          </button>
-        </div>
+    <div className="mx-auto p-6 text-gray-600">
+      <h2 className="text-[5vw] font-[Kajiro] mb-2">Address Details</h2>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <PermanentAddressSection register={register} errors={errors} />
+        <CorrespondenceAddressSection
+          register={register}
+          errors={errors}
+          isSameAsPermanent={isSameAsPermanent}
+          defaultChecked={Data.isSameAsPermanent}
+        />
+        <NavigationButtons onPrev={MovetoPrevStep} />
       </form>
     </div>
   );

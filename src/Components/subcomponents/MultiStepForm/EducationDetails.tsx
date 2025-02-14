@@ -1,115 +1,211 @@
-import React from 'react';
+import React, { useState, useEffect } from "react";
+import { useFormStore } from "../../../GlobalStore/FormStore";
+import { InputFieldProps,SelectFieldProps,RecordsTableProps,EducationRecord } from "../../../Interfaces/EducationDetailsInterfaces";
 
-const EducationDetails = () => {
-  const HandleClick=()=>{
-    const currentStepString = localStorage.getItem("currentStep");
-    const currentStep = currentStepString ? parseInt(currentStepString, 10) : 0;
-    localStorage.setItem("currentStep", (currentStep + 1).toString());
-  }
+const InputField: React.FC<InputFieldProps> = ({
+  label,
+  type = "text",
+  value,
+  onChange,
+  readOnly = false,
+  required = false,
+}) => (
+  <div className="space-y-1">
+    <label className="block font-medium">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      type={type}
+      className="w-full p-2 border rounded-md"
+      value={value}
+      onChange={onChange}
+      readOnly={readOnly}
+    />
+  </div>
+);
+
+const SelectField: React.FC<SelectFieldProps> = ({
+  label,
+  value,
+  onChange,
+  options,
+  required = false,
+}) => (
+  <div>
+    <label className="block font-medium">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select className="w-full p-2 border rounded-md" value={value} onChange={onChange}>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+const RecordsTable: React.FC<RecordsTableProps> = ({ records }) => {
+  if (records.length === 0) return null;
   return (
-    <div className="mx-auto p-6 ">
-      <h2 className="text-xl mb-6 font-bold">Education Details</h2>
+    <div className="mt-8">
+      <table className="min-w-full border-collapse border border-gray-200">
+        <thead>
+          <tr>
+            <th className="border border-gray-200 p-2">Exam Name</th>
+            <th className="border border-gray-200 p-2">Board/University</th>
+            <th className="border border-gray-200 p-2">Year of Passing</th>
+            <th className="border border-gray-200 p-2">Obtained Marks</th>
+            <th className="border border-gray-200 p-2">Total Marks</th>
+            <th className="border border-gray-200 p-2">Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {records.map((record, index) => (
+            <tr key={index}>
+              <td className="border border-gray-200 p-2 text-center">{record.examName}</td>
+              <td className="border border-gray-200 p-2 text-center">{record.boardUniversity}</td>
+              <td className="border border-gray-200 p-2 text-center">{record.year}</td>
+              <td className="border border-gray-200 p-2 text-center">{record.obtainedMarks}</td>
+              <td className="border border-gray-200 p-2 text-center">{record.totalMarks}</td>
+              <td className="border border-gray-200 p-2 text-center">{record.percentage}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
-      <div className="grid grid-cols-2 gap-x-8 gap-y-4 ">
-        {/* Exam Level */}
-        <div className="space-y-1">
-          <label className="block font-medium">
-            Exam Level <span className="text-red-500">*</span>
-          </label>
-          <select 
-            className="w-full p-2 border rounded-md"
-            value="HSC"
-          >
-            <option>HSC</option>
-          </select>
-        </div>
+const EducationDetails: React.FC = () => {
+  const examOptions: string[] = ["HSC", "SSC"];
 
-        {/* Exam Name */}
-        <div className="space-y-1">
-          <label className="block font-medium">
-            Exam Name <span className="text-red-500">*</span>
-          </label>
-          <select 
-            className="w-full p-2 border rounded-md"
-            value="HSC"
-          >
-            <option>HSC</option>
-          </select>
-        </div>
+  const [examName, setExamName] = useState<string>(examOptions[0]);
+  const [boardUniversity] = useState<string>(
+    "Maharashtra State Board of Secondary and Higher Secondary Education"
+  );
+  const [year, setYear] = useState<string>("2022");
+  const [obtainedMarks, setObtainedMarks] = useState<string>("50");
+  const [totalMarks, setTotalMarks] = useState<string>("800");
+  const [records, setRecords] = useState<EducationRecord[]>([]);
+
+  const { ActiveFormStep,setActiveFormStep } = useFormStore();
+
+  const computedPercentage =
+    totalMarks && obtainedMarks
+      ? ((parseFloat(obtainedMarks) / parseFloat(totalMarks)) * 100).toFixed(2)
+      : "0.00";
+
+  
+  const availableExamOptions = examOptions.filter(
+    (option) => !records.some((record) => record.examName === option)
+  );
+
+  useEffect(() => {
+    if (availableExamOptions.length && !availableExamOptions.includes(examName)) {
+      setExamName(availableExamOptions[0]);
+    }
+  }, [availableExamOptions, examName]);
+
+  const handleAdd = () => {
+    if (availableExamOptions.length === 0) return; 
+
+    const newRecord: EducationRecord = {
+      examName,
+      boardUniversity,
+      year,
+      obtainedMarks,
+      totalMarks,
+      percentage: computedPercentage,
+    };
+
+    setRecords((prev) => [...prev, newRecord]);
+  };
+
+  const handleNext = () => {
+    setActiveFormStep(ActiveFormStep+1);
+  };
+
+  return (
+    <div className="mx-auto p-6 text-gray-600">
+      <h2 className="text-[5vw] mb-2 font-[Kajiro]">Education Details</h2>
+
+      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+        <SelectField
+          label="Exam Name"
+          required
+          value={examName}
+          onChange={(e) => setExamName(e.target.value)}
+          options={availableExamOptions}
+        />
 
         {/* Board/University */}
-        <div className="col-span-2 space-y-1">
-          <label className="block font-medium">
-            Board/University <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            className="w-full p-2 border rounded-md"
-            value="Maharashtra State board of secondary and high"
+        <div className="col-span-2">
+          <InputField
+            label="Board/University"
+            value={boardUniversity}
             readOnly
+            required
+            onChange={() => {}}
           />
         </div>
 
         {/* Year of Passing */}
-        <div className="space-y-1">
-          <label className="block font-medium">
-            Year of Passing <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            className="w-full p-2 border rounded-md"
-            value="2022"
-          />
-        </div>
+        <InputField
+          label="Year of Passing"
+          type="number"
+          value={year}
+          required
+          onChange={(e) => setYear(e.target.value)}
+        />
 
         {/* Obtained Marks */}
-        <div className="space-y-1">
-          <label className="block font-medium">
-            Obtained Marks <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <span className="absolute left-2 top-2">$</span>
-            <input
-              type="number"
-              className="w-full pl-6 p-2 border rounded-md"
-              value="50"
-            />
-          </div>
-        </div>
+        <InputField
+          label="Obtained Marks"
+          type="number"
+          value={obtainedMarks}
+          required
+          onChange={(e) => setObtainedMarks(e.target.value)}
+        />
 
         {/* Total Marks */}
-        <div className="space-y-1">
-          <label className="block font-medium">
-            Total Marks <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            className="w-full p-2 border rounded-md"
-            value="800"
-          />
-        </div>
+        <InputField
+          label="Total Marks"
+          type="number"
+          value={totalMarks}
+          required
+          onChange={(e) => setTotalMarks(e.target.value)}
+        />
 
-        {/* Percentage */}
-        <div className="space-y-1">
-          <label className="block font-medium">Percentage<span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            className="w-full p-2 border rounded-md"
-            value="62.50"
-            readOnly
-          />
-        </div>
+        {/* Computed Percentage */}
+        <InputField
+          label="Percentage"
+          value={computedPercentage}
+          readOnly
+          required
+          onChange={() => {}}
+        />
       </div>
 
-      {/* Buttons */}
       <div className="flex justify-between mt-8">
-        <button className="px-4 py-2 border rounded-md hover:bg-gray-50">
+        <button
+          onClick={handleAdd}
+          disabled={availableExamOptions.length === 0}
+          className={`px-4 py-2 border rounded-md ${
+            availableExamOptions.length === 0 ? "cursor-not-allowed" : "hover:bg-gray-50"
+          }`}
+        >
           Add
         </button>
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700" onClick={HandleClick}>
+        <button
+          onClick={handleNext}
+          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
+        >
           Save & Next
         </button>
       </div>
+
+      <RecordsTable records={records} />
     </div>
   );
 };

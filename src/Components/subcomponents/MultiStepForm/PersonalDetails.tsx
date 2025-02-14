@@ -8,39 +8,42 @@ import FormInput from "../Field/FormInput";
 import FieldGroup from "../Field/FieldGroup";
 import {FieldOptionInterfaces} from "../../../Interfaces/FieldOption";
 import { PersonalDetailsValidation } from "../../../ValidationSchema/PersonalDetailsValidation";
+import { usePersonalDetailsStore } from "../../../GlobalStore/PersonalDetailsStore";
 
 
 const PersonalDetails: React.FC = () => {
-   
+ 
   const { ActiveFormStep, setActiveFormStep } = useFormStore();
-  
+  const {Data , setData} = usePersonalDetailsStore()
   const { register, handleSubmit, formState: { errors } } = useForm<PersonalDetailsData>({
     resolver: yupResolver(PersonalDetailsValidation) as any,
     defaultValues: {
-      title: "",
-      lastName: "",
-      firstName: "",
-      middleName: "",
-      mobileNo: "",
-      phoneNo: "",
-      identificationStatus: "",
-      bloodGroup: "",
-      gender: "",
-      dob: "",
-      occupation: "",
-      motherTongue: "",
-      birthPlace: "",
-      nationality: "",
-      admissionCategory: "",
-      casteCategory: "",
-      fatherName: "",
-      guardianContact: "",
-      familyIncome: "",
-      aadhaarNo: "",
+      title: Data.title,
+      lastName: Data.lastName,
+      firstName: Data.firstName,
+      middleName: Data.middleName,
+      mobileNo: Data.mobileNo,
+      phoneNo: Data.phoneNo,
+      identificationStatus: Data.identificationStatus,
+      bloodGroup: Data.bloodGroup,
+      gender: Data.gender,
+      dob: Data.dob,
+      occupation: Data.occupation,
+      motherTongue: Data.motherTongue,
+      birthPlace: Data.birthPlace,
+      nationality: Data.nationality,
+      admissionCategory: Data.admissionCategory,
+      casteCategory: Data.casteCategory,
+      fatherName: Data.fatherName,
+      guardianContact: Data.guardianContact,
+      familyIncome: Data.familyIncome,
+      aadhaarNo: Data.aadhaarNo,
     },
   });
+  
   const onSubmit = (data: PersonalDetailsData) => {
     console.log(data);
+    setData(data);
     alert("Form submitted successfully!");
     setActiveFormStep(ActiveFormStep + 1);
   };
@@ -83,7 +86,7 @@ const PersonalDetails: React.FC = () => {
     { label: "Guardian Contact No.", name: "guardianContact" },
     { label: "Family Income", name: "familyIncome" },
   ];
- 
+  
   return (
 
     <div className="p-6 font-sans text-gray-600">

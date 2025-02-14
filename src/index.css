@@ -1,7 +1,5 @@
 @import "tailwindcss";
-*{
-   cursor:default;
-}
+
 @font-face {
     font-family: Kajiro;
     src: url('/font/Kajiro Bold.ttf');
