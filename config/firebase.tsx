@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics} from "firebase/analytics";
 import {getAuth,GoogleAuthProvider} from "firebase/auth";
-
+import { getFirestore } from "firebase/firestore";
 const firebaseConfig = {
   apiKey: "AIzaSyDZzbXilEbCEi29aim0Q61WefZAjDHSKHI",
   authDomain: "college-admission-system-b7798.firebaseapp.com",
@@ -17,3 +17,4 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 export const auth = getAuth(app);
 export const provider=new GoogleAuthProvider();
+export const db=getFirestore(app);

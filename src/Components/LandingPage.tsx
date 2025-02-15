@@ -1,12 +1,15 @@
 import { useState, useRef } from 'react';
 import ProcessStep from './subcomponents/ProcessStep';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 
 function LandingPage() {
   const [maskPos, setMaskPos] = useState({ x: 0, y: 0 });
   const [maskSize, setmaskSize] = useState(20);
   const [bgColor, setbgColor] = useState("yellow");
   const textContainerRef = useRef<HTMLDivElement>(null);
+  const navigate=useNavigate();
+  let computedMaskSize = maskSize;
 
   const handleMouseMovement = (e: React.MouseEvent<HTMLDivElement>) => {
     if (textContainerRef.current) {
@@ -30,7 +33,6 @@ function LandingPage() {
     }
   };
 
-  let computedMaskSize = maskSize;
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-5">
@@ -44,8 +46,8 @@ function LandingPage() {
           </div>
           <div className="flex gap-x-5">
             <h1>Admission Brochure</h1>
-            <h1 style={{ cursor: 'pointer' }}>Student Login</h1>
-            <h1 style={{ cursor: 'pointer' }}>Admin Login</h1>
+            <h1 style={{ cursor: 'pointer' }} onClick={()=>{navigate("/student-login")}}>Student Login</h1>
+            <h1 style={{ cursor: 'pointer' }} onClick={()=>{navigate("/admin-login")}}>Admin Login</h1>
           </div>
         </div>
         <div className="centralpart h-[80vh] w-full overflow-hidden">

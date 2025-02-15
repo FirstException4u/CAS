@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useFormStore } from "../../../GlobalStore/FormStore";
+import { useNavigate } from "react-router-dom";
 
 type FileInfo = {
   id: string;
@@ -35,7 +36,7 @@ type DocumentListProps = {
 };
 
 
-const DOCUMENT_OPTIONS = ["ADJAM@CADIO", "XII MARGINET"];
+const DOCUMENT_OPTIONS = ["AadharCard", "XII Marksheet"];
 const FILE_SIZE_LIMIT = 200 * 1024;
 
 const generateId = (): string => Math.random().toString(36).substr(2, 9);
@@ -75,7 +76,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         type="file"
         id="file-upload"
         className="hidden"
-        accept="image/png, image/jpeg, image/gif, .pdf"
+        accept="image/png, .pdf"
         onChange={onFileChange}
       />
       <label
@@ -154,8 +155,9 @@ export const DocumentUploadForm = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [documentGroups, setDocumentGroups] = useState<DocumentGroup[]>([]);
   const [fileError, setFileError] = useState("");
-  const { ActiveFormStep, setActiveFormStep } = useFormStore();
-
+  const [SubmitError,setSubmitError] = useState("");
+  const [NumberOfFileUploaded,setNumberOfFileUploaded]=useState(0);
+  const  navigate=useNavigate();
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFileError("");
     const file = e.target.files?.[0];
@@ -178,8 +180,15 @@ export const DocumentUploadForm = () => {
       setFileError("Please select a document option!");
       return;
     }
-    const fileExtension = uploadedFile.name.split(".").pop() || "";
-    const newFile: FileInfo = {
+
+  const fileExtension = uploadedFile.name.split(".").pop() || "";
+   if(selectedDoc === DOCUMENT_OPTIONS[0]){
+    setNumberOfFileUploaded(NumberOfFileUploaded+1);
+   }
+   if(selectedDoc === DOCUMENT_OPTIONS[1]){
+    setNumberOfFileUploaded(NumberOfFileUploaded+1);
+   }
+  const newFile: FileInfo = {
       id: generateId(),
       format: fileExtension.toUpperCase(),
       downloadLink: URL.createObjectURL(uploadedFile),
@@ -217,7 +226,13 @@ export const DocumentUploadForm = () => {
   };
 
   const handleNext = () => {
-    setActiveFormStep(ActiveFormStep + 1);
+    if(NumberOfFileUploaded>=2 && documentGroups.length===NumberOfFileUploaded){
+       navigate("/student");
+    }
+    else{
+      setSubmitError("Please add atleast two file of each options.")
+    }
+    console.log(documentGroups);
   };
 
   return (
@@ -250,6 +265,7 @@ export const DocumentUploadForm = () => {
           >
             Save &amp; Next
           </Button>
+          {SubmitError && <p className="text-red-500 text-xs mt-1">{SubmitError}</p>}
         </div>
       </div>
     </div>

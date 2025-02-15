@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../config/firebase";
+import { AuthenticationSchema } from "../ValidationSchema/AuthenticationSchema";
 
 function Login() {
     const [email, setEmail] = useState("");
@@ -11,19 +12,14 @@ function Login() {
     const navigate = useNavigate();
 
     const handleLogin = async () => {
-        // Reset any previous error message
+      
         setErrorMessage("");
 
-        // Email validation
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailPattern.test(email)) {
-            setErrorMessage("Please enter a valid email address");
-            return;
-        }
-
-        // Password validation
-        if (password.length < 8) {
-            setErrorMessage("Password must be at least 8 characters long");
+       
+        try {
+            await AuthenticationSchema.validate({ email, password });
+        } catch (validationError: any) {
+            setErrorMessage(validationError.message);
             return;
         }
 
@@ -67,19 +63,18 @@ function Login() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
-
-                  
-                       
-                            <button
-                                className={`bg-black text-lg p-2 rounded-2xl w-1/2 font-[Header] tracking-widest mt-6 relative after:content-[''] after:absolute after:h-[30px] after:w-[30px] after:top-[50%] after:-left-[10%] after:-translate-x-[50%] after:-translate-y-[50%] after:rounded-[50%] after:border-4 after:border-red-600 after:border-t-yellow-500 after:animate-spin after:transition-all after:duration-500 overflow-hidden ${loading ? 'after:left-[50%]' : 'after:-left-[10%]'} ${loading ? 'text-black' : 'text-white'} `}
-                                onClick={handleLogin}
-                            >
-                                Login
-                            </button>
-                        
+                    <button
+                        className={`bg-black text-lg p-2 rounded-2xl w-1/2 font-[Header] tracking-widest mt-6 relative after:content-[''] after:absolute after:h-[30px] after:w-[30px] after:top-[50%] after:-left-[10%] after:-translate-x-[50%] after:-translate-y-[50%] after:rounded-[50%] after:border-4 after:border-red-600 after:border-t-yellow-500 after:animate-spin after:transition-all after:duration-500 overflow-hidden ${loading ? 'after:left-[50%]' : 'after:-left-[10%]'} ${loading ? 'text-black' : 'text-white'}`}
+                        onClick={handleLogin}
+                    >
+                        Login
+                    </button>
                     {errorMessage && !loading && (
                         <p className="text-red-500 mt-2">{errorMessage}</p>
                     )}
+                    <h1 className="font-[Header] text-[2vw] text-black mt-5" onClick={() => navigate("/Signup")}>
+                        Have N't Register yet?
+                    </h1>
                 </div>
             </div>
         </div>
