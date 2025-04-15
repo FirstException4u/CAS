@@ -1,48 +1,15 @@
 import { useState } from "react";
-import { useFormStore } from "../../../GlobalStore/FormStore";
 import { useNavigate } from "react-router-dom";
+import { DocumentUploadInterface } from "../../../Interfaces/DocumentUploadInterface";
+import { useStudentDataStore } from "../../../GlobalStore/FormStore";
+import uploadFileAndGetDownloadURL from "../GetLinkForDocument";
 
-type FileInfo = {
-  id: string;
-  format: string;
-  downloadLink: string;
-};
-
-type DocumentGroup = {
-  option: string;
-  files: FileInfo[];
-};
-
-type ButtonProps = {
-  onClick: () => void;
-  children: React.ReactNode;
-  className?: string;
-};
-
-type SelectorProps = {
-  selected: string;
-  onSelect: (value: string) => void;
-};
-
-type FileUploaderProps = {
-  uploadedFile: File | null;
-  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  error?: string;
-};
-
-type DocumentListProps = {
-  groups: DocumentGroup[];
-  onDelete: (option: string, id: string) => void;
-};
-
-
-const DOCUMENT_OPTIONS = ["AadharCard", "XII Marksheet"];
+const DOCUMENT_OPTIONS = ["AadharCard", "XII Marksheet", "X Marksheet", "Category Certificate"];
 const FILE_SIZE_LIMIT = 200 * 1024;
 
 const generateId = (): string => Math.random().toString(36).substr(2, 9);
 
-
-const DocumentSelector: React.FC<SelectorProps> = ({ selected, onSelect }) => (
+const DocumentSelector: React.FC<DocumentUploadInterface["SelectorProps"]> = ({ selected, onSelect, disabledOptions }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-2">
       Name of Document
@@ -54,7 +21,7 @@ const DocumentSelector: React.FC<SelectorProps> = ({ selected, onSelect }) => (
     >
       <option value="">Please select</option>
       {DOCUMENT_OPTIONS.map((option) => (
-        <option key={option} value={option}>
+        <option key={option} value={option} disabled={disabledOptions.includes(option)}>
           {option}
         </option>
       ))}
@@ -62,10 +29,11 @@ const DocumentSelector: React.FC<SelectorProps> = ({ selected, onSelect }) => (
   </div>
 );
 
-const FileUploader: React.FC<FileUploaderProps> = ({
+const FileUploader: React.FC<DocumentUploadInterface["FileUploaderProps"]> = ({
   uploadedFile,
   onFileChange,
   error,
+  isDisabled = false,
 }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -78,38 +46,35 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         className="hidden"
         accept="image/png, .pdf"
         onChange={onFileChange}
+        disabled={isDisabled}
       />
       <label
         htmlFor="file-upload"
-        className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        className={`px-4 py-2 rounded-md ${
+          isDisabled
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+        }`}
       >
-        ☐ Browse...
+        {isDisabled ? "✓ Uploaded" : "☐ Browse..."}
       </label>
-      {uploadedFile && (
-        <span className="text-sm text-gray-600">{uploadedFile.name}</span>
-      )}
+      {uploadedFile && <span className="text-sm text-gray-600">{uploadedFile.name}</span>}
     </div>
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
 
-const DocumentList: React.FC<DocumentListProps> = ({ groups, onDelete }) => {
+const DocumentList: React.FC<DocumentUploadInterface["DocumentListProps"]> = ({ groups, onDelete }) => {
   if (groups.length === 0) return null;
   return (
     <div className="border-t border-gray-200 pt-4">
-      <h3 className="text-lg font-semibold text-gray-700 mb-3">
-        Document List
-      </h3>
+      <h3 className="text-lg font-semibold text-gray-700 mb-3">Document List</h3>
       <div className="overflow-x-auto">
         <table className="min-w-full">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="text-left py-2 text-sm font-medium text-gray-700">
-                Document Option
-              </th>
-              <th className="text-left py-2 text-sm font-medium text-gray-700">
-                File Format
-              </th>
+              <th className="text-left py-2 text-sm font-medium text-gray-700">Document Option</th>
+              <th className="text-left py-2 text-sm font-medium text-gray-700">File Format</th>
               <th className="py-2"></th>
             </tr>
           </thead>
@@ -129,7 +94,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ groups, onDelete }) => {
                       Download
                     </a>
                     <button
-                      onClick={() => onDelete(group.option, file.id)}
+                      onClick={() => onDelete(group.option)}
                       className="text-red-600 hover:text-red-800 text-sm"
                     >
                       Delete
@@ -145,19 +110,22 @@ const DocumentList: React.FC<DocumentListProps> = ({ groups, onDelete }) => {
   );
 };
 
-const Button: React.FC<ButtonProps> = ({ onClick, children, className }) => (
-  <button onClick={onClick} className={`px-6 py-2 rounded-md ${className}`}>
+const Button: React.FC<DocumentUploadInterface["ButtonProps"]> = ({ onClick, children, className, disabled }) => (
+  <button onClick={onClick} className={`px-6 py-2 rounded-md ${className}`} disabled={disabled}>
     {children}
   </button>
 );
+
 export const DocumentUploadForm = () => {
+  const { updateField } = useStudentDataStore();
   const [selectedDoc, setSelectedDoc] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [documentGroups, setDocumentGroups] = useState<DocumentGroup[]>([]);
+  const [documentGroups, setDocumentGroups] = useState<DocumentUploadInterface["DocumentGroup"][]>([]);
   const [fileError, setFileError] = useState("");
-  const [SubmitError,setSubmitError] = useState("");
-  const [NumberOfFileUploaded,setNumberOfFileUploaded]=useState(0);
-  const  navigate=useNavigate();
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFileError("");
     const file = e.target.files?.[0];
@@ -181,28 +149,19 @@ export const DocumentUploadForm = () => {
       return;
     }
 
-  const fileExtension = uploadedFile.name.split(".").pop() || "";
-   if(selectedDoc === DOCUMENT_OPTIONS[0]){
-    setNumberOfFileUploaded(NumberOfFileUploaded+1);
-   }
-   if(selectedDoc === DOCUMENT_OPTIONS[1]){
-    setNumberOfFileUploaded(NumberOfFileUploaded+1);
-   }
-  const newFile: FileInfo = {
+    const fileExtension = uploadedFile.name.split(".").pop() || "";
+    const newFile: DocumentUploadInterface["FileInfo"] = {
       id: generateId(),
       format: fileExtension.toUpperCase(),
       downloadLink: URL.createObjectURL(uploadedFile),
+      file: uploadedFile, 
     };
 
     setDocumentGroups((prevGroups) => {
-      const existingGroup = prevGroups.find(
-        (group) => group.option === selectedDoc
-      );
+      const existingGroup = prevGroups.find((group) => group.option === selectedDoc);
       if (existingGroup) {
-        return prevGroups.map((group) =>
-          group.option === selectedDoc
-            ? { ...group, files: [...group.files, newFile] }
-            : group
+          return prevGroups.map((group) =>
+          group.option === selectedDoc ? { ...group, files: [newFile] } : group
         );
       } else {
         return [...prevGroups, { option: selectedDoc, files: [newFile] }];
@@ -213,26 +172,60 @@ export const DocumentUploadForm = () => {
     setFileError("");
   };
 
-  const handleDelete = (option: string, id: string) => {
-    setDocumentGroups((prevGroups) =>
-      prevGroups
-        .map((group) =>
-          group.option === option
-            ? { ...group, files: group.files.filter((file) => file.id !== id) }
-            : group
-        )
-        .filter((group) => group.files.length > 0)
-    );
+  const handleDelete = (option: string) => {
+    setDocumentGroups((prevGroups) => prevGroups.filter((group) => group.option !== option));
   };
 
-  const handleNext = () => {
-    if(NumberOfFileUploaded>=2 && documentGroups.length===NumberOfFileUploaded){
-       navigate("/student");
+  const handleNext = async () => {
+    if (documentGroups.length !== DOCUMENT_OPTIONS.length) {
+      setSubmitError("Please upload one file for each document type.");
+      return;
     }
-    else{
-      setSubmitError("Please add atleast two file of each options.")
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+    
+      const uploadPromises = documentGroups.map(async (group) => {
+        const file = group.files[0].file;
+        const filePath = `document/College-Admission-Data/${Date.now()}_${group.option}`;
+        const downloadURL = await uploadFileAndGetDownloadURL(file, filePath);
+        console.log(group.option+" "+downloadURL);
+        switch (group.option) {
+          case "AadharCard":
+            updateField("aadharUrl", downloadURL);
+            break;
+          case "Category Certificate":
+            updateField("categoryCertificateUrl", downloadURL);
+            break;
+          case "X Marksheet":
+            updateField("tenthCertificateUrl", downloadURL);
+            break;
+          case "XII Marksheet":
+            updateField("twelvethCertificateUrl", downloadURL);
+            break;
+          default:
+            break;
+        }
+      });
+
+      await Promise.all(uploadPromises);
+      navigate("/student");
+    } catch (error) {
+      setSubmitError("Error uploading documents. Please try again.");
+      console.error("Upload error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-    console.log(documentGroups);
+  };
+
+  const getDisabledOptions = () => {
+    return documentGroups.map((group) => group.option);
+  };
+
+  const isFileUploaderDisabled = (option: string) => {
+    return documentGroups.some((group) => group.option === option);
   };
 
   return (
@@ -240,32 +233,31 @@ export const DocumentUploadForm = () => {
       <h1 className="font-[Kajiro] text-[5vw]">Document Upload</h1>
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-4">
-          <DocumentSelector selected={selectedDoc} onSelect={setSelectedDoc} />
+          <DocumentSelector
+            selected={selectedDoc}
+            onSelect={setSelectedDoc}
+            disabledOptions={getDisabledOptions()}
+          />
           <FileUploader
             uploadedFile={uploadedFile}
             onFileChange={handleFileChange}
             error={fileError}
+            isDisabled={selectedDoc ? isFileUploaderDisabled(selectedDoc) : false}
           />
         </div>
         <div className="text-xs text-gray-500 space-y-1">
           <p>* Please select a valid file (e.g. PNG, JPEG, GIF, PDF)</p>
           <p>* Maximum size 200 KB</p>
         </div>
-        <Button
-          onClick={handleAdd}
-          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 bg-transparent"
-        >
+        <Button onClick={handleAdd} className="flex items-center gap-1 text-blue-600 hover:text-blue-800 bg-transparent">
           <span className="text-xl">+</span> Add
         </Button>
         <DocumentList groups={documentGroups} onDelete={handleDelete} />
         <div className="pt-6">
-          <Button
-            onClick={handleNext}
-            className="bg-green-600 text-white hover:bg-green-700"
-          >
-            Save &amp; Next
+          <Button onClick={handleNext} className="mt-4 bg-red-500 font-bold text-white py-2 px-4 rounded" disabled={isSubmitting}>
+            SUBMIT
           </Button>
-          {SubmitError && <p className="text-red-500 text-xs mt-1">{SubmitError}</p>}
+          {submitError && <p className="text-red-500 text-md font-bold mt-1">{submitError}</p>}
         </div>
       </div>
     </div>

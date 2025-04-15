@@ -1,5 +1,5 @@
 export interface PersonalDetailsData {
-    title: string;
+    title: SelectOption[];
     lastName: string;
     firstName: string;
     middleName: string;
@@ -16,7 +16,14 @@ export interface PersonalDetailsData {
     admissionCategory?: string;
     casteCategory?: string;
     fatherName?: string;
+    motherName?: string,
+    Occupation?: string,
     guardianContact?: string;
     familyIncome?: string;
     aadhaarNo: string;
+}
+
+export interface SelectOption {
+    value: string;
+    label: string;
 }

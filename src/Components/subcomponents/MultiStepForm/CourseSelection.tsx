@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { useFormStore } from "../../../GlobalStore/FormStore";
+import { useFormStore, useStudentDataStore } from "../../../GlobalStore/FormStore";
 
 export default function CourseSelection(): JSX.Element {
-  const [selectedCourse, setSelectedCourse] = useState<string>("FYBSCT");
+  const [selectedCourse, setSelectedCourse] = useState<string>("FYBSCIT");
   const {ActiveFormStep,setActiveFormStep} = useFormStore();
+  const {updateField} = useStudentDataStore();
   const handleCourseChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
     setSelectedCourse(event.target.value);
   };
   const handleNext = () => {
+    updateField("course",selectedCourse)
     setActiveFormStep(ActiveFormStep+1);
   };
 
@@ -36,12 +38,18 @@ export default function CourseSelection(): JSX.Element {
             </select>
           </div>
 
-          <div className="border-t border-gray-200 pt-6">
+          <div className="border-t border-gray-200 pt-6 flex justify-between">
             <button 
               onClick={handleNext} 
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
+              className="bg-red-500  text-white font-medium py-2 px-4 rounded transition-colors"
             >
               Save & Next
+            </button>
+            <button 
+              onClick={()=>{setActiveFormStep(ActiveFormStep-1)}} 
+              className="bg-green-500  text-white font-medium py-2 px-4 rounded transition-colors"
+            >
+              Previous
             </button>
           </div>
         </div>

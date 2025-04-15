@@ -8,7 +8,7 @@ export interface PersonalDetailsDataFormat {
 
 export const usePersonalDetailsStore = create<PersonalDetailsDataFormat>((set) => ({
   Data: {
-    title: "",
+    title: [{ value: "", label: "" }],
     lastName: "",
     firstName: "",
     middleName: "",
@@ -25,6 +25,8 @@ export const usePersonalDetailsStore = create<PersonalDetailsDataFormat>((set) =
     admissionCategory: "",
     casteCategory: "",
     fatherName: "",
+    motherName: "",
+    Occupation: "",
     guardianContact: "",
     familyIncome: "",
     aadhaarNo: "",

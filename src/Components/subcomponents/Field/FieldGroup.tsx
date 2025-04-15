@@ -16,6 +16,7 @@ import {FieldGroupInterfaces} from "../../../Interfaces/FieldGroup";
           type={field.type || "text"}
           register={register}
           error={errors[field.name]?.message}
+          options={field?.options}
         />
       ))}
     </div>

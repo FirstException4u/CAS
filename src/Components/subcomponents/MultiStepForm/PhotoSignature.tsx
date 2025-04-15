@@ -1,22 +1,41 @@
 import { useState } from 'react';
 import { useFormStore } from '../../../GlobalStore/FormStore';
+import { useStudentDataStore } from '../../../GlobalStore/FormStore';
+import uploadFileAndGetDownloadURL from '../GetLinkForDocument';
 
 export const PhotoSignatureForm = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string>("");
   const { ActiveFormStep, setActiveFormStep } = useFormStore();
+  const { updateField } = useStudentDataStore();
 
   const handleFileChange = (
     setter: React.Dispatch<React.SetStateAction<File | null>>,
     maxSize: number
-  ) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  ) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.size <= maxSize * 1024) {
       setter(file);
+      const filePath = `document/College-Admission-Data/${Date.now()}_${file.name}`;
+      
+      try {
+        const fileUrl = await uploadFileAndGetDownloadURL(file, filePath);
+        
+        if (maxSize === 500) {
+          updateField("photoUrl", fileUrl);
+        } else {
+          updateField("signUrl", fileUrl);
+        }
+      } catch (error) {
+        console.error("File upload failed:", error);
+        setFormError("File upload failed. Please try again.");
+      }
+    } else {
+      setFormError(`File exceeds the maximum allowed size of ${maxSize} KB.`);
     }
   };
-
+  
   const handleSaveNext = () => {
     if (!photoFile && !signatureFile) {
       setFormError("Please upload a valid Student and Signature Photo (Max size 500 KB).");
@@ -30,7 +49,6 @@ export const PhotoSignatureForm = () => {
       return;
     }
 
-
     if (!signatureFile) {
       setFormError("Please upload a valid Student Signature (Max size 300 KB).");
       return;
@@ -39,10 +57,8 @@ export const PhotoSignatureForm = () => {
       return;
     }
 
-
     setFormError("");
     setActiveFormStep(ActiveFormStep + 1);
-
   };
 
   return (
@@ -111,18 +127,25 @@ export const PhotoSignatureForm = () => {
         </div>
 
         {/* Save & Next Button */}
-        <div className="pt-6">
+        <div className="pt-6 flex justify-between">
           <button
             type="button"
             onClick={handleSaveNext}
-            className="w-full md:w-auto px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            className="w-full md:w-auto font-bold px-6 py-2 bg-red-500 text-white rounded-md hover:bg-green-700 transition-colors"
           >
             Save & Next
           </button>
-          {formError && (
-            <p className="mt-2 text-sm text-red-600">{formError}</p>
-          )}
+          <button
+            type="button"
+            onClick={() => { setActiveFormStep(ActiveFormStep - 1) }}
+            className="w-full md:w-auto font-bold px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-700 transition-colors"
+          >
+            Previous
+          </button>
         </div>
+        {formError && (
+            <p className="mt-2 text-sm text-red-600">{formError}</p>
+         )}
       </div>
     </div>
   );

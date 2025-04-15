@@ -1,24 +1,12 @@
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useFormStore } from "../../../GlobalStore/FormStore";
-import { AddressDetailsInterfaces } from "../../../Interfaces/AddressDetailsInterfaces";
+import { useFormStore, useStudentDataStore } from "../../../GlobalStore/FormStore";
+import { AddressDetailsInterfaces,FieldProps,CorrespondenceFieldProps,NavigationProps } from "../../../Interfaces/AddressDetailsInterfaces";
 import { AddressDetailsValidation } from "../../../ValidationSchema/AddressDetailsValidation";
 import { useAddressDetailsStore } from "../../../GlobalStore/AddressDetailsStore";
 
-interface FieldProps {
-  register: ReturnType<typeof useForm>["register"];
-  errors: any;
-}
 
-interface CorrespondenceFieldProps extends FieldProps {
-  isSameAsPermanent: boolean;
-  defaultChecked: boolean;
-}
-
-interface NavigationProps {
-  onPrev: () => void;
-}
 
 const PermanentAddressSection: React.FC<FieldProps> = ({ register, errors }) => (
   <div className="mb-8">
@@ -83,16 +71,16 @@ const NavigationButtons: React.FC<NavigationProps> = ({ onPrev }) => (
   <div className="flex justify-between">
     <button
       type="submit"
-      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+        className="mt-4 bg-red-500 font-bold text-white py-2 px-4 rounded"
     >
       Save & Next
     </button>
     <button
       type="button"
-      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+      className="mt-4 bg-green-500 font-bold text-white py-2 px-6 rounded"
       onClick={onPrev}
     >
-      Prev
+      Previous
     </button>
   </div>
 );
@@ -100,7 +88,7 @@ const NavigationButtons: React.FC<NavigationProps> = ({ onPrev }) => (
 const AddressDetails: React.FC = () => {
   const { ActiveFormStep, setActiveFormStep } = useFormStore();
   const { Data, setData } = useAddressDetailsStore();
-
+  const {updateField} = useStudentDataStore();
   const {
     register,
     handleSubmit,
@@ -133,7 +121,8 @@ const AddressDetails: React.FC = () => {
     };
 
     setData(updatedData);
-    alert("Moved");
+    updateField("Permanentaddress",updatedData.permanentAddress);
+    updateField("CorrespondenceAddress",updatedData.correspondenceAddress);
     setActiveFormStep(ActiveFormStep + 1);
   };
 

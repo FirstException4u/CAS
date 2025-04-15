@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../config/firebase";
 import { AuthenticationSchema } from "../ValidationSchema/AuthenticationSchema";
+import { useStudentDashboardStore } from "../GlobalStore/StudentDashboardStore";
 
 function Login() {
     const [email, setEmail] = useState("");
@@ -10,12 +11,12 @@ function Login() {
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const navigate = useNavigate();
-
+    const setuserEmail = useStudentDashboardStore((state) => state.setuserEmail);
     const handleLogin = async () => {
-      
+
         setErrorMessage("");
 
-       
+
         try {
             await AuthenticationSchema.validate({ email, password });
         } catch (validationError: any) {
@@ -25,7 +26,12 @@ function Login() {
 
         setLoading(true);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            if (userCredential.user.email) {
+                setuserEmail(userCredential.user.email);
+            } else {
+                console.error("User email is null");
+            }
             navigate("/student");
         } catch (error: any) {
             setErrorMessage("The user email or password is not correct");

@@ -36,7 +36,7 @@ const Form: React.FC = () => {
                     ))}
                 </div>
                 <div className="w-full min-h-[70vh] bg-white rounded-3xl mt-4">
-                    {stepscomponents[5]}
+                    {stepscomponents[ActiveFormStep]}
                 </div>
             </div>
         </div>

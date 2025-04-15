@@ -1,9 +1,9 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useFormStore } from "../../../GlobalStore/FormStore";
-import { PersonalDetailsData } from "../../../Interfaces/PersonalDetailsInterfaces";
+import { StudentDataInterface } from "../../../GlobalStore/FormStore";
+import { useFormStore, useStudentDataStore } from "../../../GlobalStore/FormStore";
+import { PersonalDetailsData, SelectOption } from "../../../Interfaces/PersonalDetailsInterfaces";
 import FormInput from "../Field/FormInput";
 import FieldGroup from "../Field/FieldGroup";
 import {FieldOptionInterfaces} from "../../../Interfaces/FieldOption";
@@ -15,6 +15,7 @@ const PersonalDetails: React.FC = () => {
  
   const { ActiveFormStep, setActiveFormStep } = useFormStore();
   const {Data , setData} = usePersonalDetailsStore()
+  const {updateField,StudentData} = useStudentDataStore();
   const { register, handleSubmit, formState: { errors } } = useForm<PersonalDetailsData>({
     resolver: yupResolver(PersonalDetailsValidation) as any,
     defaultValues: {
@@ -28,13 +29,13 @@ const PersonalDetails: React.FC = () => {
       bloodGroup: Data.bloodGroup,
       gender: Data.gender,
       dob: Data.dob,
-      occupation: Data.occupation,
       motherTongue: Data.motherTongue,
       birthPlace: Data.birthPlace,
-      nationality: Data.nationality,
       admissionCategory: Data.admissionCategory,
       casteCategory: Data.casteCategory,
       fatherName: Data.fatherName,
+      motherName:Data.motherName,
+      occupation: Data.occupation,
       guardianContact: Data.guardianContact,
       familyIncome: Data.familyIncome,
       aadhaarNo: Data.aadhaarNo,
@@ -42,9 +43,12 @@ const PersonalDetails: React.FC = () => {
   });
   
   const onSubmit = (data: PersonalDetailsData) => {
-    console.log(data);
     setData(data);
-    alert("Form submitted successfully!");
+    Object.entries(data).forEach(([key, value]) => {
+      if (key in StudentData) {
+        updateField(key as keyof StudentDataInterface, value);
+      }
+    });
     setActiveFormStep(ActiveFormStep + 1);
   };
 
@@ -52,9 +56,30 @@ const PersonalDetails: React.FC = () => {
     console.error("Form validation errors:", errors);
   };
 
+  const titleOptions: SelectOption[] = [
+    { value: "mr", label: "Mr" },
+    { value: "mrs", label: "Mrs" }
+  ];
   
+  const genderOptions: SelectOption[] = [
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" }
+  ];
+
+  const categoryOptions: SelectOption[] = [
+    { value: "General", label: "General" },
+    { value: "Obc", label: "Obc" },
+    { value: "Sc/St", label: "Sc/St" },
+  ];
+
+
   const personalInfoFields: FieldOptionInterfaces[] = [
-    { label: "Title *", name: "title" },
+    { 
+      label: "Title *", 
+      name: "title",
+      type: "select",
+      options: titleOptions
+    },
     { label: "Last Name *", name: "lastName" },
     { label: "First Name *", name: "firstName" },
     { label: "Middle Name *", name: "middleName" },
@@ -62,33 +87,25 @@ const PersonalDetails: React.FC = () => {
 
   const contactInfoFields: FieldOptionInterfaces[] = [
     { label: "Mobile No. *", name: "mobileNo" },
-    { label: "Phone No.", name: "phoneNo" },
-    { label: "Identification Status", name: "identificationStatus" },
+    { label: "Gender *", name: "gender" , type:"select",options:genderOptions},
     { label: "Blood Group", name: "bloodGroup" },
   ];
 
   const detailsFields: FieldOptionInterfaces[] = [
-    { label: "Gender *", name: "gender" },
     { label: "Date of Birth *", name: "dob", type: "date" },
-    { label: "Occupation", name: "occupation" },
     { label: "Mother Tongue", name: "motherTongue" },
-  ];
-
-  const additionalInfoFields: FieldOptionInterfaces[] = [
     { label: "Birth Place *", name: "birthPlace" },
-    { label: "Nationality *", name: "nationality" },
-    { label: "Admission Category", name: "admissionCategory" },
-    { label: "Caste Category", name: "casteCategory" },
+    { label: "Admission Category", name: "admissionCategory" ,type:"select",options:categoryOptions},
   ];
 
   const parentInfoFields: FieldOptionInterfaces[] = [
-    { label: "Father's Name", name: "fatherName" },
-    { label: "Guardian Contact No.", name: "guardianContact" },
+    { label: "Father's Name *", name: "fatherName" },
+    { label: "Mother's Name *", name: "motherName" },
     { label: "Family Income", name: "familyIncome" },
+    { label: "Occupation *", name: "occupation" } 
   ];
   
   return (
-
     <div className="p-6 font-sans text-gray-600">
       <h2 className="text-[5vw] mb-4 font-[Kajiro]">Personal Details</h2>
       <form onSubmit={handleSubmit(onSubmit, onError)}>
@@ -101,15 +118,12 @@ const PersonalDetails: React.FC = () => {
         {/* Additional Details */}
         <FieldGroup fields={detailsFields} register={register} errors={errors} />
 
-        {/* More Information */}
-        <FieldGroup fields={additionalInfoFields} register={register} errors={errors} />
-
         {/* Parent Information */}
-        <h3 className="font-semibold mb-2">Parent Information</h3>
+        <h3 className="font-bold mb-2">Parent Information</h3>
         <FieldGroup
           fields={parentInfoFields}
           register={register}
-          errors={{}}
+          errors={errors}
           gridClasses="grid grid-cols-2 gap-4 border-b pb-4 mb-4"
         />
 
@@ -117,7 +131,7 @@ const PersonalDetails: React.FC = () => {
         <h3 className="font-semibold mb-2">Other Information</h3>
         <div>
           <FormInput
-            label="Aadhaar No."
+            label="Aadhaar No.*"
             name="aadhaarNo"
             register={register}
             error={errors.aadhaarNo?.message}
@@ -127,9 +141,9 @@ const PersonalDetails: React.FC = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          className="mt-4 bg-red-500 text-white py-2 px-4 rounded"
+          className="mt-4 bg-red-500 font-bold text-white py-2 px-4 rounded"
         >
-          submit
+          Save & Next
         </button>
       </form>
     </div>

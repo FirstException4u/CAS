@@ -1,20 +1,21 @@
-
 import { initializeApp } from "firebase/app";
-import { getAnalytics} from "firebase/analytics";
-import {getAuth,GoogleAuthProvider} from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 const firebaseConfig = {
-  apiKey: "AIzaSyDZzbXilEbCEi29aim0Q61WefZAjDHSKHI",
-  authDomain: "college-admission-system-b7798.firebaseapp.com",
-  projectId: "college-admission-system-b7798",
-  storageBucket: "college-admission-system-b7798.firebasestorage.app",
-  messagingSenderId: "114323292723",
-  appId: "1:114323292723:web:6a16a9330bb9235fc7d946",
-  measurementId: "G-T9EK2HKR46"
+  apiKey: "AIzaSyCaH_m97SpUWSJ800sFjMAXUFgnix6RNLg",
+  authDomain: "railway-concession-4acd0.firebaseapp.com",
+  projectId: "railway-concession-4acd0",
+  storageBucket: "railway-concession-4acd0.appspot.com",
+  messagingSenderId: "853556292607",
+  appId: "1:853556292607:web:66f53d539004f5c90f15ca",
+  measurementId: "G-6T0KENDQKF"
 };
 
+
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 export const auth = getAuth(app);
-export const provider=new GoogleAuthProvider();
-export const db=getFirestore(app);
+export const provider = new GoogleAuthProvider();
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+
