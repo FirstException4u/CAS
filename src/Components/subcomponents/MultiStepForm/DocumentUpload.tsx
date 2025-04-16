@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { DocumentUploadInterface } from "../../../Interfaces/DocumentUploadInterface";
 import { useStudentDataStore } from "../../../GlobalStore/FormStore";
 import uploadFileAndGetDownloadURL from "../GetLinkForDocument";
+import { useStudentDashboardStore } from "../../../GlobalStore/StudentDashboardStore";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../../../../config/firebase";
+
 
 const DOCUMENT_OPTIONS = ["AadharCard", "XII Marksheet", "X Marksheet", "Category Certificate"];
 const FILE_SIZE_LIMIT = 200 * 1024;
@@ -50,11 +54,10 @@ const FileUploader: React.FC<DocumentUploadInterface["FileUploaderProps"]> = ({
       />
       <label
         htmlFor="file-upload"
-        className={`px-4 py-2 rounded-md ${
-          isDisabled
+        className={`px-4 py-2 rounded-md ${isDisabled
             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
             : "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-        }`}
+          }`}
       >
         {isDisabled ? "✓ Uploaded" : "☐ Browse..."}
       </label>
@@ -117,7 +120,8 @@ const Button: React.FC<DocumentUploadInterface["ButtonProps"]> = ({ onClick, chi
 );
 
 export const DocumentUploadForm = () => {
-  const { updateField } = useStudentDataStore();
+  const { StudentData, updateField } = useStudentDataStore();
+  const { userEmail } = useStudentDashboardStore();
   const [selectedDoc, setSelectedDoc] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [documentGroups, setDocumentGroups] = useState<DocumentUploadInterface["DocumentGroup"][]>([]);
@@ -154,19 +158,20 @@ export const DocumentUploadForm = () => {
       id: generateId(),
       format: fileExtension.toUpperCase(),
       downloadLink: URL.createObjectURL(uploadedFile),
-      file: uploadedFile, 
+      file: uploadedFile,
     };
 
     setDocumentGroups((prevGroups) => {
       const existingGroup = prevGroups.find((group) => group.option === selectedDoc);
       if (existingGroup) {
-          return prevGroups.map((group) =>
+        return prevGroups.map((group) =>
           group.option === selectedDoc ? { ...group, files: [newFile] } : group
         );
       } else {
         return [...prevGroups, { option: selectedDoc, files: [newFile] }];
       }
     });
+
     setSelectedDoc("");
     setUploadedFile(null);
     setFileError("");
@@ -181,44 +186,55 @@ export const DocumentUploadForm = () => {
       setSubmitError("Please upload one file for each document type.");
       return;
     }
-
+  
     setIsSubmitting(true);
     setSubmitError("");
-
+  
     try {
-    
+      const updatedStudentData = { ...StudentData }; // Make a fresh copy
+  
       const uploadPromises = documentGroups.map(async (group) => {
         const file = group.files[0].file;
         const filePath = `document/College-Admission-Data/${Date.now()}_${group.option}`;
         const downloadURL = await uploadFileAndGetDownloadURL(file, filePath);
-        console.log(group.option+" "+downloadURL);
+  
         switch (group.option) {
           case "AadharCard":
-            updateField("aadharUrl", downloadURL);
+            updatedStudentData.aadharUrl = downloadURL;
             break;
           case "Category Certificate":
-            updateField("categoryCertificateUrl", downloadURL);
+            updatedStudentData.categoryCertificateUrl = downloadURL;
             break;
           case "X Marksheet":
-            updateField("tenthCertificateUrl", downloadURL);
+            updatedStudentData.tenthCertificateUrl = downloadURL;
             break;
           case "XII Marksheet":
-            updateField("twelvethCertificateUrl", downloadURL);
+            updatedStudentData.twelvethCertificateUrl = downloadURL;
             break;
           default:
             break;
         }
       });
-
+  
       await Promise.all(uploadPromises);
+  
+      await setDoc(doc(db, "Users", userEmail), updatedStudentData);
+  
+      
+      updateField("aadharUrl", updatedStudentData.aadharUrl);
+      updateField("categoryCertificateUrl", updatedStudentData.categoryCertificateUrl);
+      updateField("tenthCertificateUrl", updatedStudentData.tenthCertificateUrl);
+      updateField("twelvethCertificateUrl", updatedStudentData.twelvethCertificateUrl);
+      localStorage.setItem("formStatus", JSON.stringify({ userEmail: userEmail, formFilled: true }));
       navigate("/student");
     } catch (error) {
-      setSubmitError("Error uploading documents. Please try again.");
       console.error("Upload error:", error);
+      setSubmitError("Error uploading documents. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
+  
 
   const getDisabledOptions = () => {
     return documentGroups.map((group) => group.option);
@@ -254,7 +270,11 @@ export const DocumentUploadForm = () => {
         </Button>
         <DocumentList groups={documentGroups} onDelete={handleDelete} />
         <div className="pt-6">
-          <Button onClick={handleNext} className="mt-4 bg-red-500 font-bold text-white py-2 px-4 rounded" disabled={isSubmitting}>
+          <Button
+            onClick={handleNext}
+            className="mt-4 bg-red-500 font-bold text-white py-2 px-4 rounded"
+            disabled={isSubmitting}
+          >
             SUBMIT
           </Button>
           {submitError && <p className="text-red-500 text-md font-bold mt-1">{submitError}</p>}

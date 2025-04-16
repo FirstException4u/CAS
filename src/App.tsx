@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import AdminDashboard from "./Components/AdminDashboard";
 import LandingPage from "./Components/LandingPage";
@@ -8,6 +7,7 @@ import StudentPage from './Components/StudentPage';
 import Form from './Components/Form';
 import Signup from './Components/Signup';
 import StudentDataView from './Components/StudentDataView';
+import CheckingFormFilled from './Components/subcomponents/CheckingFormFilled';
 
 
 function App() {
@@ -22,9 +22,16 @@ function App() {
           <Route path="/admin-login" element={<Login />} />
           <Route path="/student-login" element={<Login />} />
           <Route path="/student-page" element={<StudentPage />} />
-          <Route path="/form" element={<Form/>}/>
-          <Route path="/Signup" element={<Signup/>}/>
-          <Route path="/StudentView" element={<StudentDataView/>}/>
+          <Route
+            path="/form"
+            element={
+              <CheckingFormFilled>
+                <Form />
+              </CheckingFormFilled>
+            }
+          />
+          <Route path="/Signup" element={<Signup />} />
+          <Route path="/StudentView" element={<StudentDataView />} />
         </Routes>
       </div>
     </Router>

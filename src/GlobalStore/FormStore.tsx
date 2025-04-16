@@ -78,5 +78,6 @@ export const useStudentDataStore = create<StudentDataStore>((set) => ({
 
 export const useFormStore = create<FormStoreState>((set) => ({
   ActiveFormStep: 0,
+  
   setActiveFormStep: (value: number) => set({ ActiveFormStep: value }),
 }));
